@@ -12,8 +12,11 @@
   "type": "module",
   "description": "",
   "dependencies": {
+    "@clerk/express": "^1.7.60",
+    "cloudinary": "^2.8.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "mernandreactnative": "file:.."
+    "mernandreactnative": "file:..",
+    "mongoose": "^8.19.3"
   }
 }
