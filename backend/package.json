@@ -18,6 +18,7 @@
     "express": "^5.2.1",
     "inngest": "^3.48.1",
     "mernandreactnative": "file:..",
-    "mongoose": "^8.19.3"
+    "mongoose": "^8.19.3",
+    "multer": "^2.0.2"
   }
 }

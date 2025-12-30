@@ -5,6 +5,7 @@ import { connectDB } from './config/db.js';
 import { clerkMiddleware } from '@clerk/express'
 import { serve } from 'inngest/express';
 import { inngest , functions } from './config/inngest.js';
+import adminRoutes from './routes/admin.route.js';
 
 const app = express();
 
@@ -13,6 +14,9 @@ const __dirname = path.resolve();
 app.use(express.json());
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 app.use("/api/inngest", serve({client : inngest , functions}));
+
+// for admin 
+app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({ message: "Server is running" });
