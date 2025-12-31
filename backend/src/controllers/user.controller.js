@@ -8,7 +8,7 @@ export const addAddress = async (req, res) => {
         const { label, fullName, streetAddress, city, state, zipCode, phoneNumber, isDefault } = req.body;
 
         const user = req.user;
-        if (!label || !fullName || !streetAddress || !city || !state || !zipCode || !phoneNumber) {
+        if ( !fullName || !streetAddress || !city || !state || !zipCode) {
             return res.status(400).json({ message: "All fields are required" });
         }
         if (phoneNumber.length !== 10) {
@@ -145,7 +145,11 @@ export const removeFromWishlist = async (req, res) => {
 
 export const getWishlist = async (req, res) => {
     try {
-        const user = req.user;
+        // basically we are fetching the user and then we are fetching the wishlist from the user
+        const user = await User.findById(req.user._id).populate("wishlist");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
         res.status(200).json({ message: "Wishlist fetched successfully", wishlist: user.wishlist });
     } catch (error) {
         console.error("Error in getWishlist controller:", error);
