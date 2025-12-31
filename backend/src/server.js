@@ -6,6 +6,7 @@ import { clerkMiddleware } from '@clerk/express'
 import { serve } from 'inngest/express';
 import { inngest , functions } from './config/inngest.js';
 import adminRoutes from './routes/admin.route.js';
+import userRoutes from './routes/user.route.js';
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.use("/api/inngest", serve({client : inngest , functions}));
 
 // for admin 
 app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes);
+
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({ message: "Server is running" });
