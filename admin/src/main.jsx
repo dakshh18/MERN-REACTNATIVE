@@ -31,6 +31,9 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 });
 
+
+
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
