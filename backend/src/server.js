@@ -20,7 +20,8 @@ app.use(express.json());
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 app.use(cors({
     origin : ENV.CLIENT_URL,
-    credentials : true,
+    credentials : true, // credentials : true allows the
+    //  browser to send the cookies with the request
 }))
 
 

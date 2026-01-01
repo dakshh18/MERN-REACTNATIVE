@@ -55,67 +55,78 @@ export async function createProduct(req, res) {
 
 }
 
+// export async function getAllProducts(req, res) {
+//     try {
+//         // Extract pagination parameters from query string
+//         // page: which page to fetch (default: 1)
+//         // limit: how many items per page (default: 10)
+//         // Example: /api/products?page=2&limit=20
+//         const page = parseInt(req.query.page) || 1; // Convert to number, default to page 1
+//         const limit = parseInt(req.query.limit) || 10; // Convert to number, default to 10 items per page
+
+//         // Calculate how many documents to skip
+//         // For page 1: skip 0 documents (show first 10)
+//         // For page 2: skip 10 documents (show next 10)
+//         // For page 3: skip 20 documents (show next 10)
+//         // Formula: skip = (page - 1) * limit
+//         const skip = (page - 1) * limit;
+
+//         // Fetch products with pagination
+//         // .skip(skip): Skip the first 'skip' number of documents
+//         // .limit(limit): Only return 'limit' number of documents
+//         // .sort({ createdAt: -1 }): Sort by creation date in descending order (-1 means newest first)
+//         const products = await Product.find()
+//             .sort({ createdAt: -1 })
+//             .skip(skip)
+//             .limit(limit);
+
+//         // Get total count of all products (for pagination metadata)
+//         // This helps frontend know how many total pages exist
+//         const totalProducts = await Product.countDocuments();
+
+//         // Calculate total pages needed
+//         // Math.ceil rounds up: if we have 25 products and limit is 10, we need 3 pages
+//         const totalPages = Math.ceil(totalProducts / limit);
+
+//         // Check if there are more pages available
+//         const hasNextPage = page < totalPages;
+//         // Check if there is a previous page
+//         const hasPrevPage = page > 1;
+
+//         res.status(200).json({
+//             message: "Products fetched successfully",
+//             products,
+//             // Pagination metadata for frontend
+//             pagination: {
+//                 currentPage: page,        // Current page number
+//                 totalPages: totalPages,   // Total number of pages
+//                 totalProducts: totalProducts, // Total number of products in database
+//                 limit: limit,            // Items per page
+//                 hasNextPage: hasNextPage, // Boolean: can go to next page?
+//                 hasPrevPage: hasPrevPage, // Boolean: can go to previous page?
+//             }
+//         })
+
+//     } catch (error) {
+//         console.error("Error fetching products:", error);
+//         res.status(500).json({
+//             message: "Internal server error",
+//             error: error.message,
+//         })
+//     }
+
+// }
+
 export async function getAllProducts(req, res) {
     try {
-        // Extract pagination parameters from query string
-        // page: which page to fetch (default: 1)
-        // limit: how many items per page (default: 10)
-        // Example: /api/products?page=2&limit=20
-        const page = parseInt(req.query.page) || 1; // Convert to number, default to page 1
-        const limit = parseInt(req.query.limit) || 10; // Convert to number, default to 10 items per page
-
-        // Calculate how many documents to skip
-        // For page 1: skip 0 documents (show first 10)
-        // For page 2: skip 10 documents (show next 10)
-        // For page 3: skip 20 documents (show next 10)
-        // Formula: skip = (page - 1) * limit
-        const skip = (page - 1) * limit;
-
-        // Fetch products with pagination
-        // .skip(skip): Skip the first 'skip' number of documents
-        // .limit(limit): Only return 'limit' number of documents
-        // .sort({ createdAt: -1 }): Sort by creation date in descending order (-1 means newest first)
-        const products = await Product.find()
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-
-        // Get total count of all products (for pagination metadata)
-        // This helps frontend know how many total pages exist
-        const totalProducts = await Product.countDocuments();
-
-        // Calculate total pages needed
-        // Math.ceil rounds up: if we have 25 products and limit is 10, we need 3 pages
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        // Check if there are more pages available
-        const hasNextPage = page < totalPages;
-        // Check if there is a previous page
-        const hasPrevPage = page > 1;
-
-        res.status(200).json({
-            message: "Products fetched successfully",
-            products,
-            // Pagination metadata for frontend
-            pagination: {
-                currentPage: page,        // Current page number
-                totalPages: totalPages,   // Total number of pages
-                totalProducts: totalProducts, // Total number of products in database
-                limit: limit,            // Items per page
-                hasNextPage: hasNextPage, // Boolean: can go to next page?
-                hasPrevPage: hasPrevPage, // Boolean: can go to previous page?
-            }
-        })
-
+      // -1 means in desc order: most recent products first
+      const products = await Product.find().sort({ createdAt: -1 });
+      res.status(200).json(products);
     } catch (error) {
-        console.error("Error fetching products:", error);
-        res.status(500).json({
-            message: "Internal server error",
-            error: error.message,
-        })
+      console.error("Error fetching products:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-
-}
+  }
 
 export async function updateProduct(req, res) {
 
