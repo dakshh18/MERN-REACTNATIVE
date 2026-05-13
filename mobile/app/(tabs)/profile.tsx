@@ -155,27 +155,39 @@ const ProfileScreen = () => {
 
         {/* Stats */}
         <View className='px-6 mt-4 flex-row justify-between'>
-          <View className='bg-surface rounded-3xl p-4 flex-1 mr-2 items-center'>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/cart')}
+            activeOpacity={0.8}
+            className='bg-surface rounded-3xl p-4 flex-1 mr-2 items-center'
+          >
             <Ionicons name='cart' size={22} color='#1DB954' />
             <Text className='text-text-primary font-bold text-xl mt-2'>
               {itemCount}
             </Text>
             <Text className='text-text-secondary text-xs'>Cart Items</Text>
-          </View>
-          <View className='bg-surface rounded-3xl p-4 flex-1 mx-1 items-center'>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/account/wishlist')}
+            activeOpacity={0.8}
+            className='bg-surface rounded-3xl p-4 flex-1 mx-1 items-center'
+          >
             <Ionicons name='heart' size={22} color='#FF6B6B' />
             <Text className='text-text-primary font-bold text-xl mt-2'>
               {wishListCount}
             </Text>
             <Text className='text-text-secondary text-xs'>Wishlist</Text>
-          </View>
-          <View className='bg-surface rounded-3xl p-4 flex-1 ml-2 items-center'>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/account/orders')}
+            activeOpacity={0.8}
+            className='bg-surface rounded-3xl p-4 flex-1 ml-2 items-center'
+          >
             <Ionicons name='receipt' size={22} color='#FFC107' />
             <Text className='text-text-primary font-bold text-xl mt-2'>
               {orderCount}
             </Text>
             <Text className='text-text-secondary text-xs'>Orders</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Menu */}

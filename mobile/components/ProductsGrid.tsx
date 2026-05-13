@@ -15,9 +15,20 @@ interface ProductGridProps {
 
 const ProductsGrid = ({ products, isLoading, isError }: ProductGridProps) => {
 
-  const { isInWishList, toggleWishList, isAddingToWishList, isRemovingFromWishList } = useWishList();
+  const { isInWishList, addToWishList, removeFromWishList } = useWishList();
   const { addToCart } = useCart();
   const [pendingProductId, setPendingProductId] = useState<string | null>(null);
+  const [pendingWishlistId, setPendingWishlistId] = useState<string | null>(null);
+
+  const handleToggleWishlist = (productId: string) => {
+    if (pendingWishlistId) return;
+    setPendingWishlistId(productId);
+    const alreadyIn = isInWishList(productId);
+    const mutate = alreadyIn ? removeFromWishList : addToWishList;
+    mutate(productId, {
+      onSettled: () => setPendingWishlistId(null),
+    } as any);
+  };
 
   const handleAddToCart = (productId: string, productName: string) => {
     setPendingProductId(productId);
@@ -64,10 +75,10 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductGridProps) => {
         <TouchableOpacity
           className=' absolute top-3 right-3 bg-black/30 backdrop-blur-xl p-2 rounded-full'
           activeOpacity={0.7}
-          onPress={() => toggleWishList(product._id)}
-          disabled={isAddingToWishList || isRemovingFromWishList}
+          onPress={() => handleToggleWishlist(product._id)}
+          disabled={pendingWishlistId === product._id}
         >
-          {isAddingToWishList || isRemovingFromWishList ? (
+          {pendingWishlistId === product._id ? (
             <ActivityIndicator size='small' color='#fff' />
           ) : (
             <Ionicons
