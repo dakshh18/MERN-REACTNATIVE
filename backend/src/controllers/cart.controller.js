@@ -4,7 +4,7 @@ import { Product } from '../models/product.model.js';
 
 export async function getCart(req, res) {
     try {
-        let cart = await Cart.findOne({ clerkId: req.user.clerkId }).populate('items.productId');
+        let cart = await Cart.findOne({ clerkId: req.user.clerkId }).populate('items.product');
         if (!cart) {
             const user = req.user;
             cart = await Cart.create({

@@ -8,13 +8,13 @@ export const addAddress = async (req, res) => {
         const { label, fullName, streetAddress, city, state, zipCode, phoneNumber, isDefault } = req.body;
 
         const user = req.user;
-        if ( !fullName || !streetAddress || !city || !state || !zipCode) {
+        if (!fullName || !streetAddress || !city || !state || !zipCode || !phoneNumber) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        if (phoneNumber.length !== 10) {
+        if (String(phoneNumber).length !== 10) {
             return res.status(400).json({ message: "Phone number must be 10 digits" });
         }
-        if (zipCode.length !== 6) {
+        if (String(zipCode).length !== 6) {
             return res.status(400).json({ message: "Zip code must be 6 digits" });
         }
 
@@ -94,7 +94,7 @@ export const deleteAddress = async (req, res) => {
     try {
         const { addressId } = req.params;
         const user = req.user;
-        user.addAddress.pull(addressId);
+        user.addresses.pull(addressId);
         await user.save();
         res.status(200).json({ message: "Address deleted successfully", addresses: user.addresses });
     } catch (error) {

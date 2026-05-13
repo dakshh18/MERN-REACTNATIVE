@@ -1,12 +1,31 @@
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import SafeScreen from '@/components/SafeScreen'
 import { Ionicons } from '@expo/vector-icons'
 import ProductsGrid from '@/components/ProductsGrid'
+import useProducts from '@/hooks/useProducts'
 
 const ShopScreen = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState('All')
+
+    const { data: products, isLoading, isError } = useProducts();
+
+    const filteredProducts = useMemo(() => {
+        if (!products) return [];
+        let filtered = products;
+
+        // Filter by category
+        if (selectedCategory !== 'All') {
+            filtered = filtered.filter(product => product.category === selectedCategory);
+        }
+        // Filter by search query
+        if (searchQuery.trim()) {
+            filtered = filtered.filter(product => product.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+        return filtered;
+    }, [products, searchQuery, selectedCategory])
+
 
     const CATEGORIES = [
         { name: "All", icon: "grid-outline" as const },
@@ -17,91 +36,95 @@ const ShopScreen = () => {
     ];
     return (
         <SafeScreen>
+
+            {/* <View className="bg-background z-10"> */}
+
+
+            {/* Header component */}
+            <View className='px-6 pb-4 pt-6' >
+                <View className='flex-row items-center justify-between mb-6'>
+                    <View>
+                        <Text className='text-text-primary text-3xl font-bold tracking-tighter'> Shop</Text>
+                        <Text className='text-text-secondary text-sm mt-1 ml-2'>Browse our All products</Text>
+
+                    </View>
+
+                    <TouchableOpacity
+                        className='bg-surface/50 p-3 rounded-full'
+                        activeOpacity={0.5}
+                    >
+                        <Ionicons name='options-outline' size={22} color='#fff' />
+
+                    </TouchableOpacity>
+
+                </View>
+
+                {/* SEARCH BAR VIEW */}
+                <View className='bg-surface flex-row items-center px-5 py-2 rounded-2xl'>
+                    <Ionicons name='search' size={22} color='#666' />
+                    <TextInput
+                        placeholder='Search for products'
+                        placeholderTextColor='#666'
+                        className='flex-1 ml-3 text-base text-text-primary'
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+
+                    />
+                </View>
+            </View>
+            {/* CATEGORY FILTERS VIEW */}
+            <View className="mb-6 px-6">
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12 }} // spacing between items
+                >
+                    {CATEGORIES.map(category => {
+                        const isSelected = selectedCategory === category.name;
+
+                        return (
+                            <TouchableOpacity
+                                key={category.name}
+                                onPress={() => setSelectedCategory(category.name)}
+                                className={`rounded-2xl w-20 h-20 items-center justify-center
+                                       ${isSelected ? 'bg-primary' : 'bg-surface'}
+                                      `}
+                            >
+                                {category.icon ? (
+                                    <Ionicons
+                                        name={category.icon}
+                                        size={30}
+                                        color={isSelected ? '#121212' : '#fff'}
+                                    />
+                                ) : (
+                                    <Image
+                                        source={category.image}
+                                        className="w-12 h-12"
+                                        resizeMode="contain"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+            </View>
+            {/* </View> */}
+
             <ScrollView
                 className='flex-1'
                 contentContainerStyle={{ paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header component */}
-                <View className='px-6 pb-4 pt-6' >
-                    <View className='flex-row items-center justify-between mb-6'>
-                        <View>
-                            <Text className='text-text-primary text-3xl font-bold tracking-tighter'> Shop</Text>
-                            <Text className='text-text-secondary text-sm mt-1 ml-2'>Browse our All products</Text>
-
-                        </View>
-
-                        <TouchableOpacity
-                            className='bg-surface/50 p-3 rounded-full'
-                            activeOpacity={0.5}
-                        >
-                            <Ionicons name='options-outline' size={22} color='#fff' />
-
-                        </TouchableOpacity>
-
-                    </View>
-
-                    {/* SEARCH BAR VIEW */}
-                    <View className='bg-surface flex-row items-center px-5 py-2 rounded-2xl'>
-                        <Ionicons name='search' size={22} color='#666' />
-                        <TextInput
-                            placeholder='Search for products'
-                            placeholderTextColor='#666'
-                            className='flex-1 ml-3 text-base text-text-primary'
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-
-                        />
-                    </View>
-                </View>
-                {/* CATEGORY FILTERS VIEW */}
-                <View className="mb-6 px-6">
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ gap: 12 }} // spacing between items
-                    >
-                        {CATEGORIES.map(category => {
-                            const isSelected = selectedCategory === category.name;
-
-                            return (
-                                <TouchableOpacity
-                                    key={category.name}
-                                    onPress={() => setSelectedCategory(category.name)}
-                                    className={`rounded-2xl w-20 h-20 items-center justify-center
-                                       ${isSelected ? 'bg-primary' : 'bg-surface'}
-                                      `}
-                                >
-                                    {category.icon ? (
-                                        <Ionicons
-                                            name={category.icon}
-                                            size={30}
-                                            color={isSelected ? '#121212' : '#fff'}
-                                        />
-                                    ) : (
-                                        <Image
-                                            source={category.image}
-                                            className="w-12 h-12"
-                                            resizeMode="contain"
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-                </View>
-
 
                 {/* PRODUCTS LIST VIEW */}
                 <View className='px-6 mb-6'>
                     <View className='flex-row items-center justify-between mb-4'>
                         <Text className='text-text-primary text-lg  font-bold'>Products </Text>
-                        <Text className='text-text-secondary text-lg  font-bold'> 10 Items </Text>
+                        <Text className='text-text-secondary text-lg  font-bold'> {filteredProducts.length} Items </Text>
                     </View>
 
                     {/* Product Grid */}
-                    <ProductsGrid />
-
+                    <ProductsGrid products={filteredProducts} isLoading={isLoading} isError={isError} />
                 </View>
             </ScrollView>
         </SafeScreen>

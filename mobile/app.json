@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Mern Shop",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/auth-image.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,11 +12,10 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.mernandreactnative.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#121212",
+        "foregroundImage": "./assets/images/auth-image.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -27,6 +26,14 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.mern-react-native",
+          "enableGooglePay": false
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -43,6 +50,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "97adbab2-8dc7-4862-b1f7-d8135236aa64"
+      }
+    },
+    "owner": "dakshpatel18"
   }
 }
