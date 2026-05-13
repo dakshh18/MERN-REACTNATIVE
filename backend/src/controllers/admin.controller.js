@@ -2,6 +2,7 @@ import cloudinary from '../config/cloudinary.js';
 import { Product } from '../models/product.model.js';
 import { Order } from '../models/order.model.js';
 import { User } from '../models/user.model.js';
+import { sendPushNotifications } from '../utils/push.js';
 
 export async function createProduct(req, res) {
 
@@ -232,6 +233,7 @@ export async function updateOrderStatus(req, res) {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
+        const previousStatus = order.status;
         order.status = status;
         if (status === 'shipped' && !order.shippedAt) {
             order.shippedAt = new Date();
@@ -240,6 +242,28 @@ export async function updateOrderStatus(req, res) {
             order.deliveredAt = new Date();
         }
         await order.save();
+
+        // Notify the buyer when status actually transitions to shipped/delivered.
+        if (status !== previousStatus && (status === 'shipped' || status === 'delivered')) {
+            const buyer = await User.findById(order.user).select('pushTokens');
+            if (buyer?.pushTokens?.length) {
+                const message =
+                    status === 'shipped'
+                        ? {
+                              title: 'Your order has shipped!',
+                              body: `Order #${order._id.toString().slice(-8).toUpperCase()} is on its way.`,
+                          }
+                        : {
+                              title: 'Order delivered',
+                              body: `Order #${order._id.toString().slice(-8).toUpperCase()} has arrived. Enjoy!`,
+                          };
+                sendPushNotifications(buyer.pushTokens, {
+                    ...message,
+                    data: { orderId: order._id.toString(), type: `order_${status}` },
+                }).catch(() => {});
+            }
+        }
+
         res.status(200).json({
             message: "Order status updated successfully",
             order,

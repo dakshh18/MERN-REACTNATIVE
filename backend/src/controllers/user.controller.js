@@ -143,6 +143,24 @@ export const removeFromWishlist = async (req, res) => {
     }
 }
 
+export const registerPushToken = async (req, res) => {
+    try {
+        const { pushToken } = req.body;
+        if (!pushToken || typeof pushToken !== 'string') {
+            return res.status(400).json({ message: 'pushToken is required' });
+        }
+        const user = req.user;
+        if (!user.pushTokens.includes(pushToken)) {
+            user.pushTokens.push(pushToken);
+            await user.save();
+        }
+        return res.status(200).json({ message: 'Push token registered' });
+    } catch (error) {
+        console.error('Error in registerPushToken controller:', error);
+        return res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+};
+
 export const getWishlist = async (req, res) => {
     try {
         // basically we are fetching the user and then we are fetching the wishlist from the user

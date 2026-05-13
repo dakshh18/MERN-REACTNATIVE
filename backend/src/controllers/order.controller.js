@@ -3,6 +3,7 @@ import { Order } from '../models/order.model.js';
 import { Review } from '../models/review.model.js';
 import { Cart } from '../models/cart.model.js';
 import { stripe } from '../config/stripe.js';
+import { sendPushNotifications } from '../utils/push.js';
 
 const SHIPPING_FEE = 5;
 
@@ -133,6 +134,15 @@ export async function createOrder(req, res) {
         // clear the cart
         cart.items = [];
         await cart.save();
+
+        // fire-and-forget order-placed push (don't block the response)
+        if (user.pushTokens?.length) {
+            sendPushNotifications(user.pushTokens, {
+                title: 'Order placed!',
+                body: `Your order of $${order.totalPrice.toFixed(2)} is confirmed.`,
+                data: { orderId: order._id.toString(), type: 'order_placed' },
+            }).catch(() => {});
+        }
 
         res.status(201).json({ message: 'Order created successfully', order });
     } catch (error) {

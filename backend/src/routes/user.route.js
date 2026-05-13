@@ -5,6 +5,7 @@ import {
     deleteAddress,
     getAddresses,
     getWishlist,
+    registerPushToken,
     removeFromWishlist,
     updateAddress
 } from '../controllers/user.controller.js';
@@ -19,11 +20,12 @@ router.get("/addresses", getAddresses);
 router.put("/addresses/:addressId", updateAddress);
 router.delete("/addresses/:addressId", deleteAddress);
 
-// wishlist routes 
+// wishlist routes
 router.post("/wishlist", addToWishlist);
 router.delete("/wishlist/:productId", removeFromWishlist);
 router.get("/wishlist", getWishlist);
 
-
+// push notification token
+router.post("/push-token", registerPushToken);
 
 export default router;

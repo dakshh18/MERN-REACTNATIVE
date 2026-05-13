@@ -9,6 +9,7 @@ import { toastConfig } from '@/lib/toastConfig'
 import { StripeProvider } from '@stripe/stripe-react-native'
 import * as SplashScreen from 'expo-splash-screen'
 import AppLoading from '@/components/AppLoading'
+import usePushNotifications from '@/hooks/usePushNotifications'
 
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
@@ -40,6 +41,7 @@ export default function RootLayout() {
 function AppGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth()
   const [splashHidden, setSplashHidden] = useState(false)
+  usePushNotifications()
 
   useEffect(() => {
     if (isLoaded && !splashHidden) {

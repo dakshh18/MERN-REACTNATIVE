@@ -63,8 +63,13 @@ const userSchema = new mongoose.Schema({
             type : mongoose.Schema.Types.ObjectId,
             ref : "Product",
         }
-    ]
-   
+    ],
+    pushTokens: [
+        {
+            type: String,
+        }
+    ],
+
 },{
     timestamps: true,
 });
