@@ -146,6 +146,7 @@ export const removeFromWishlist = async (req, res) => {
 export const registerPushToken = async (req, res) => {
     try {
         const { pushToken } = req.body;
+        console.log('[push] register request from clerkId=', req.user?.clerkId, 'token=', pushToken);
         if (!pushToken || typeof pushToken !== 'string') {
             return res.status(400).json({ message: 'pushToken is required' });
         }
@@ -153,6 +154,9 @@ export const registerPushToken = async (req, res) => {
         if (!user.pushTokens.includes(pushToken)) {
             user.pushTokens.push(pushToken);
             await user.save();
+            console.log('[push] token saved. user now has', user.pushTokens.length, 'tokens');
+        } else {
+            console.log('[push] token already registered for this user');
         }
         return res.status(200).json({ message: 'Push token registered' });
     } catch (error) {

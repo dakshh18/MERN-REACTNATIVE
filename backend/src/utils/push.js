@@ -5,10 +5,15 @@
 // tokens are silently skipped by Expo; we filter obvious junk client-side.
 // data: optional object payload available to the app on tap.
 export async function sendPushNotifications(tokens, { title, body, data }) {
+    console.log('[push] attempting send to', tokens?.length ?? 0, 'tokens. title=', title);
     const valid = (tokens || []).filter(
         (t) => typeof t === 'string' && t.startsWith('ExponentPushToken')
     );
-    if (valid.length === 0) return { sent: 0, skipped: 0 };
+    console.log('[push] valid tokens after filter:', valid.length);
+    if (valid.length === 0) {
+        console.warn('[push] no valid tokens, skipping send. raw tokens:', tokens);
+        return { sent: 0, skipped: 0 };
+    }
 
     const messages = valid.map((to) => ({
         to,
@@ -30,6 +35,7 @@ export async function sendPushNotifications(tokens, { title, body, data }) {
             body: JSON.stringify(messages),
         });
         const json = await res.json().catch(() => ({}));
+        console.log('[push] expo response status=', res.status, 'body=', JSON.stringify(json));
         if (!res.ok) {
             console.error('[push] non-200 response:', res.status, json);
         }

@@ -17,6 +17,13 @@ const app = express();
 const __dirname = path.resolve();
 
 app.use(express.json());
+
+// request logger for debugging
+app.use((req, _res, next) => {
+    console.log(`[req] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 app.use(cors({
     origin : ENV.CLIENT_URL,
