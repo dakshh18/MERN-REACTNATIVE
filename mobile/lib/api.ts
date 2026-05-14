@@ -2,7 +2,8 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-expo'
 import { useEffect } from 'react'
 
-const API_URL = "http://192.168.1.7:3000/api"
+const API_URL = "http://192.168.29.76:3000/api" //home
+// const API_URL = "http://192.168.1.7:3000/api" // office
 
 const api = axios.create({
     baseURL: API_URL,
