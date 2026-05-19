@@ -24,12 +24,24 @@ app.use((req, _res, next) => {
     next();
 });
 
-app.use(clerkMiddleware()); // adds auth object under the req => req.auth
+// CORS must run BEFORE clerkMiddleware so preflights and unauthenticated
+// requests still get the right Access-Control-* headers on the response.
+const allowedOrigins = (ENV.CLIENT_URL || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 app.use(cors({
-    origin : ENV.CLIENT_URL,
-    credentials : true, // credentials : true allows the
-    //  browser to send the cookies with the request
-}))
+    origin: (origin, callback) => {
+        // No Origin header: native mobile apps, curl, server-to-server. Allow.
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true,
+}));
+
+app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 
 
 app.use("/api/inngest", serve({client : inngest , functions}));

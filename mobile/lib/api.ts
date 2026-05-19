@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-expo'
 import { useEffect } from 'react'
 
-const API_URL = "http://54.175.87.204/api" // EC2 (production)
+const API_URL = "https://daksh-mern-shop.duckdns.org/api" // EC2 (production, TLS via Let's Encrypt)
 // const API_URL = "http://192.168.29.76:3000/api" // home (local backend)
 // const API_URL = "http://192.168.1.7:3000/api" // office (local backend)
 
