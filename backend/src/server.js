@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
@@ -60,14 +61,25 @@ app.use("/api/cart", cartRoutes);
 app.get("/api/health", (req, res) => {
     res.status(200).json({ message: "Server is running" });
 })
-// make our app ready fior deployment
+// In production, serve the built admin SPA from /admin/dist.
+// Guarded by an existsSync check: if the admin hasn't been built yet
+// (e.g. fresh EC2 deploy), we skip static serving instead of 500ing
+// on every unmatched GET. Run `npm run build` in admin/ to enable.
 if (ENV.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "../admin/dist")));
+    const distPath = path.join(__dirname, "../admin/dist");
+    const indexPath = path.join(distPath, "index.html");
 
-    
-    app.get("/{*any}", (req, res) => {
-        res.sendFile(path.join(__dirname, "../admin", "dist", "index.html"));
-    })
+    if (fs.existsSync(indexPath)) {
+        app.use(express.static(distPath));
+        app.get("/{*any}", (req, res) => {
+            res.sendFile(indexPath);
+        });
+    } else {
+        console.warn(
+            `[startup] admin/dist not found at ${distPath} — skipping SPA static serving. ` +
+            `Run 'npm run build' inside admin/ to enable.`
+        );
+    }
 }
 
 // app.listen(ENV.PORT, () => {
