@@ -272,6 +272,12 @@ const AddressesScreen = () => {
         visible={showForm}
         animationType='slide'
         transparent
+        // statusBarTranslucent is the magic prop here: without it, Android puts
+        // the Modal in its own fullscreen window that ignores the app's
+        // windowSoftInputMode=adjustResize. Result: keyboard covers inputs.
+        // With it, the Modal overlays the main window and inherits its resize
+        // behavior, so the form rides above the keyboard.
+        statusBarTranslucent
         onRequestClose={() => setShowForm(false)}
       >
         <KeyboardAvoidingView
@@ -291,7 +297,11 @@ const AddressesScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps='handled'
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
               <Field
                 label='Label'
                 value={form.label}
