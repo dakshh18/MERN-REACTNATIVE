@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Product } from '../models/product.model.js';
 import { Order } from '../models/order.model.js';
 import { Review } from '../models/review.model.js';
@@ -92,8 +93,8 @@ export async function createOrder(req, res) {
 
         const { cart, orderItems, totalPrice } = await buildOrderFromCart(user);
 
-        // If a paymentIntentId is supplied, verify it with Stripe before saving.
-        // We never trust the client's claim that payment succeeded.
+        // Stripe verification stays OUTSIDE the transaction: external network calls
+        // don't belong inside a Mongo transaction (long-running, retry-unfriendly).
         let paymentResult = { id: 'cod', status: 'pending' };
         if (paymentIntentId) {
             const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -105,7 +106,6 @@ export async function createOrder(req, res) {
             if (intent.metadata?.clerkId !== user.clerkId) {
                 return res.status(403).json({ message: 'Payment does not belong to this user' });
             }
-            // Sanity check the amount matches what we just recomputed.
             const expected = Math.round(totalPrice * 100);
             if (intent.amount !== expected) {
                 return res.status(400).json({
@@ -115,27 +115,49 @@ export async function createOrder(req, res) {
             paymentResult = { id: intent.id, status: 'paid' };
         }
 
-        const order = await Order.create({
-            user: user._id,
-            clerkId: user.clerkId,
-            orderItems,
-            shippingAddress,
-            paymentResult,
-            totalPrice,
-        });
+        // All Mongo writes inside ONE transaction. If any step fails, none persist.
+        // Requires a replica set (Atlas free tier qualifies).
+        const session = await mongoose.startSession();
+        let order;
+        try {
+            await session.withTransaction(async () => {
+                // Atomic compare-and-swap on stock: { stock: { $gte: qty } } guards the decrement.
+                // If two checkouts race on the last unit, only one update matches and returns the doc;
+                // the loser gets null back and we throw to abort the transaction.
+                for (const item of orderItems) {
+                    const updated = await Product.findOneAndUpdate(
+                        { _id: item.product, stock: { $gte: item.quantity } },
+                        { $inc: { stock: -item.quantity } },
+                        { session, new: true }
+                    );
+                    if (!updated) {
+                        const err = new Error(`Insufficient stock for ${item.name}`);
+                        err.status = 409;
+                        throw err;
+                    }
+                }
 
-        // decrement stock
-        await Promise.all(
-            orderItems.map((item) =>
-                Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.quantity } })
-            )
-        );
+                // Order.create's array form is required to pass { session }.
+                const [created] = await Order.create([{
+                    user: user._id,
+                    clerkId: user.clerkId,
+                    orderItems,
+                    shippingAddress,
+                    paymentResult,
+                    totalPrice,
+                }], { session });
+                order = created;
 
-        // clear the cart
-        cart.items = [];
-        await cart.save();
+                // Mongoose's default __v optimistic concurrency on cart.save() aborts the
+                // transaction if the cart was modified between buildOrderFromCart and now.
+                cart.items = [];
+                await cart.save({ session });
+            });
+        } finally {
+            await session.endSession();
+        }
 
-        // fire-and-forget order-placed push (don't block the response)
+        // Fire-and-forget order-placed push (outside transaction, doesn't block the response).
         if (user.pushTokens?.length) {
             sendPushNotifications(user.pushTokens, {
                 title: 'Order placed!',
@@ -148,6 +170,11 @@ export async function createOrder(req, res) {
     } catch (error) {
         if (error.status) {
             return res.status(error.status).json({ message: error.message });
+        }
+        if (error.name === 'VersionError') {
+            return res.status(409).json({
+                message: 'Your cart changed during checkout. Please retry.',
+            });
         }
         console.error('Error in createOrder controller:', error);
         return res.status(500).json({ message: 'Internal server error', error: error.message });
