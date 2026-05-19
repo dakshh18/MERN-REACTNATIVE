@@ -65,8 +65,8 @@ const PaymentMethodsScreen = () => {
             Save cards for one-tap checkout
           </Text>
           <Text className='text-text-secondary text-sm mt-2 text-center px-4'>
-            We're working on letting you securely save cards with Stripe so you
-            don't have to enter them each time.
+            We&apos;re working on letting you securely save cards with Stripe so you
+            don&apos;t have to enter them each time.
           </Text>
           <View className='bg-primary/10 px-3 py-1.5 rounded-full mt-4'>
             <Text className='text-primary text-xs font-semibold'>

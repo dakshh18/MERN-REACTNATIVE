@@ -56,6 +56,8 @@ export interface Product {
     totalPrice: number;
     status: "pending" | "shipped" | "delivered";
     hasReviewed: boolean;
+    shippedAt?: string;
+    deliveredAt?: string;
     createdAt: string;
     updatedAt: string;
   }

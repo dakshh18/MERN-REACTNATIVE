@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native'
+import { View, Text, TouchableOpacity, Animated } from 'react-native'
 import React, { useEffect, useRef } from 'react'
 import SafeScreen from '@/components/SafeScreen'
 import { Ionicons } from '@expo/vector-icons'
@@ -34,7 +34,7 @@ const SuccessScreen = () => {
           Order Placed!
         </Text>
         <Text className='text-text-secondary text-base mt-2 text-center'>
-          Thanks for your purchase. We'll let you know once it ships.
+          Thanks for your purchase. We&apos;ll let you know once it ships.
         </Text>
 
         <View className='bg-surface rounded-3xl p-5 mt-8 w-full'>

@@ -98,7 +98,7 @@ const NotificationsScreen = () => {
         </View>
 
         <Text className='text-text-secondary text-xs uppercase tracking-wider mb-2 ml-1'>
-          What you'll receive
+          What you&apos;ll receive
         </Text>
         <View className='bg-surface rounded-3xl overflow-hidden'>
           {SETTINGS.map((s, idx) => (

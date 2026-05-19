@@ -14,7 +14,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Order, OrderItem } from '@/types'
 
-const STATUS_STAGES: Array<{ key: Order['status']; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = [
+const STATUS_STAGES: { key: Order['status']; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
   { key: 'pending', label: 'Order Placed', icon: 'receipt' },
   { key: 'shipped', label: 'Shipped', icon: 'cube' },
   { key: 'delivered', label: 'Delivered', icon: 'home' },
