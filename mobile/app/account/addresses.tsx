@@ -9,6 +9,7 @@ import {
   Platform,
   Modal,
 } from 'react-native'
+
 import React, { useState } from 'react'
 import SafeScreen from '@/components/SafeScreen'
 import ScreenHeader from '@/components/ScreenHeader'
