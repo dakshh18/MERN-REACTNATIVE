@@ -13,13 +13,18 @@ import usePushNotifications from '@/hooks/usePushNotifications'
 
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
+// EXPO_PUBLIC_* env vars are inlined into THIS file at build time by Expo's
+// transformer. Library code (Clerk, Stripe) reading process.env at runtime
+// gets `undefined` in standalone builds — so we read the values here and
+// pass them as explicit props.
+const CLERK_PK = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
 const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    <ClerkProvider tokenCache={tokenCache} >
+    <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PK}>
       <StripeProvider publishableKey={STRIPE_PK} merchantIdentifier="merchant.mern-react-native">
         <QueryClientProvider client={queryClient}>
           <AppGate>
