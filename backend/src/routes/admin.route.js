@@ -10,6 +10,8 @@ import {
     deleteProduct
 } from '../controllers/admin.controller.js';
 import { protectRoute, adminOnly } from '../middlewares/auth.middleware.js';
+import { validate } from '../middlewares/validate.middleware.js';
+import { updateOrderStatusSchema } from '../schemas/admin.schema.js';
 import  upload  from '../middlewares/multer.middleware.js';
 const router = Router();
 
@@ -32,7 +34,7 @@ router.delete("/products/:id" , deleteProduct)
 
 // orders
 router.get("/orders", getAllOrders);
-router.patch("/orders/:orderId/status", updateOrderStatus);
+router.patch("/orders/:orderId/status", validate(updateOrderStatusSchema), updateOrderStatus);
 
 // customers
 router.get("/customers", getAllCustomers);
