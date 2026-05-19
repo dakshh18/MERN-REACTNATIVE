@@ -2,9 +2,16 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-expo'
 import { useEffect } from 'react'
 
-const API_URL = "https://daksh-mern-shop.duckdns.org/api" // EC2 (production, TLS via Let's Encrypt)
-// const API_URL = "http://192.168.29.76:3000/api" // home (local backend)
-// const API_URL = "http://192.168.1.7:3000/api" // office (local backend)
+// Loaded from mobile/.env via Expo at build time. Set EXPO_PUBLIC_API_URL
+// to (for example) "https://daksh-mern-shop.duckdns.org/api" for prod,
+// or "http://<your-LAN-ip>:3000/api" when running the backend locally.
+const API_URL = process.env.EXPO_PUBLIC_API_URL
+
+if (!API_URL) {
+    throw new Error(
+        'EXPO_PUBLIC_API_URL is not set. Add it to mobile/.env and restart `npm start`.'
+    )
+}
 
 const api = axios.create({
     baseURL: API_URL,
