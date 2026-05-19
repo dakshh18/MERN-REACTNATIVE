@@ -2,6 +2,8 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { clerkMiddleware } from '@clerk/express'
@@ -17,6 +19,15 @@ import cors from 'cors';
 const app = express();
 
 const __dirname = path.resolve();
+
+// We sit behind nginx — trust X-Forwarded-For so rate-limit + req.ip see the
+// real client IP, not nginx's loopback.
+app.set('trust proxy', 1);
+
+// Security headers (HSTS, X-Frame-Options, no X-Powered-By, etc.).
+// CSP is disabled because the admin SPA we serve in production loads scripts
+// from Clerk / Sentry / Cloudinary; configuring CSP for those is a separate task.
+app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(express.json());
 
@@ -43,6 +54,22 @@ app.use(cors({
     credentials: true,
 }));
 
+// Per-IP rate limit on the API. 100 reqs / 15 min is loose enough not to bother
+// real users on flaky connections retrying, tight enough that an unauthenticated
+// loop can't hammer Mongo. Skipped in tests so the in-memory replica set isn't
+// throttled by fixture setup.
+app.use(
+    '/api/',
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { message: 'Too many requests, please try again later.' },
+        skip: () => process.env.NODE_ENV === 'test',
+    })
+);
+
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 
 
@@ -62,7 +89,17 @@ app.use("/api/cart", cartRoutes);
 app.get("/api/health", (req, res) => {
     res.status(200).json({ message: "Server is running" });
 })
-// In production, serve the built admin SPA from /admin/dist.
+
+// JSON 404 for any unmatched /api/* route. This MUST run before the production
+// SPA fallback below — otherwise the SPA catch-all swallows /api/nonexistent
+// and returns index.html with a 200, which is wrong for an API miss.
+app.use('/api', (req, res) => {
+    res.status(404).json({
+        message: `Route not found: ${req.method} ${req.originalUrl}`,
+    });
+});
+
+// In production, serve the built admin SPA from /admin/dist for any non-/api path.
 // Guarded by an existsSync check: if the admin hasn't been built yet
 // (e.g. fresh EC2 deploy), we skip static serving instead of 500ing
 // on every unmatched GET. Run `npm run build` in admin/ to enable.
@@ -83,10 +120,19 @@ if (ENV.NODE_ENV === "production") {
     }
 }
 
-// app.listen(ENV.PORT, () => {
-//     console.log(`Server is running on port ${ENV.PORT}`);
-//     connectDB();
-// });
+// Centralised error handler. Controllers that throw (or pass to next(err)) land
+// here. Errors with a numeric `.status` or `.statusCode` are surfaced; everything
+// else becomes 500. Stack traces are only included in non-production responses.
+app.use((err, req, res, _next) => {
+    const status = err.status || err.statusCode || 500;
+    console.error(`[error] ${req.method} ${req.originalUrl} → ${status}:`, err.message);
+
+    const body = { message: err.message || 'Internal server error' };
+    if (process.env.NODE_ENV !== 'production') {
+        body.stack = err.stack;
+    }
+    res.status(status).json(body);
+});
 
 export { app };
 

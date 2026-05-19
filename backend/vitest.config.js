@@ -11,5 +11,10 @@ export default defineConfig({
         poolOptions: {
             forks: { singleFork: true },
         },
+        // Vitest doesn't set NODE_ENV automatically. Set it so server.js can
+        // detect tests (e.g. to skip rate limiting).
+        env: {
+            NODE_ENV: 'test',
+        },
     },
 });
