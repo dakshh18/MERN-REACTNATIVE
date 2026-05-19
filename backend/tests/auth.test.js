@@ -209,6 +209,74 @@ describe('Register → verify happy path', () => {
         expect(res.body.message).toMatch(/too many/i);
     });
 
+    it('reclaims an abandoned (unverified) row that collides on phone but not email', async () => {
+        // First signup: leaves an unverified row with phone +91-9876543210.
+        await request(app).post('/api/auth/register/start').send({
+            name: 'Abandoner',
+            email: 'first@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543210',
+        });
+
+        // Second signup: different email, SAME phone. Without the reclaim
+        // logic this would crash with a Mongo E11000 dup-key on phoneNumber.
+        const res = await request(app).post('/api/auth/register/start').send({
+            name: 'Newcomer',
+            email: 'second@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543210',
+        });
+        expect(res.status).toBe(200);
+
+        // Only one user should now hold this phone — the new one.
+        const users = await User.find({ phoneNumber: '+919876543210' });
+        expect(users).toHaveLength(1);
+        expect(users[0].email).toBe('second@example.com');
+    });
+
+    it('reclaims an abandoned (unverified) row that collides on email but not phone', async () => {
+        await request(app).post('/api/auth/register/start').send({
+            name: 'Abandoner',
+            email: 'same@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543210',
+        });
+        const res = await request(app).post('/api/auth/register/start').send({
+            name: 'Newcomer',
+            email: 'same@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543211',
+        });
+        expect(res.status).toBe(200);
+
+        const users = await User.find({ email: 'same@example.com' });
+        expect(users).toHaveLength(1);
+        expect(users[0].phoneNumber).toBe('+919876543211');
+    });
+
+    it('rejects when a VERIFIED user already owns the phone', async () => {
+        // Seed a verified user holding the phone.
+        await request(app).post('/api/auth/register/start').send({
+            name: 'Owner',
+            email: 'owner@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543210',
+        });
+        await request(app).post('/api/auth/register/verify').send({
+            email: 'owner@example.com',
+            otp: lastSentOtp(),
+        });
+
+        const res = await request(app).post('/api/auth/register/start').send({
+            name: 'Intruder',
+            email: 'intruder@example.com',
+            password: 'longenoughpw',
+            phoneNumber: '9876543210',
+        });
+        expect(res.status).toBe(409);
+        expect(res.body.message).toMatch(/phone/i);
+    });
+
     it('rejects an expired OTP', async () => {
         await request(app).post('/api/auth/register/start').send(baseInput);
         const user = await User.findOne({ email: baseInput.email });

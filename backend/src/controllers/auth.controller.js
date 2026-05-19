@@ -1,4 +1,5 @@
 import { User } from '../models/user.model.js';
+import { OtpVerification } from '../models/otp.model.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { signLocalJwt } from '../utils/jwt.js';
 import {
@@ -74,39 +75,42 @@ export const registerStart = async (req, res) => {
             });
         }
 
-        // Duplicate-check both identifiers up-front so we don't half-create a row.
-        const existingEmail = await User.findOne({ email });
-        if (existingEmail && existingEmail.isOtpVerified) {
+        // Verified users own their email/phone — anyone else trying to use
+        // them is rejected.
+        const verifiedEmail = await User.findOne({ email, isOtpVerified: true });
+        if (verifiedEmail) {
             return res.status(409).json({ message: 'An account with this email already exists.' });
         }
-        const existingPhone = await User.findOne({ phoneNumber });
-        if (existingPhone && existingPhone.isOtpVerified && (!existingEmail || !existingEmail._id.equals(existingPhone._id))) {
+        const verifiedPhone = await User.findOne({ phoneNumber, isOtpVerified: true });
+        if (verifiedPhone) {
             return res.status(409).json({ message: 'An account with this phone number already exists.' });
         }
 
-        const passwordHash = await hashPassword(password);
-
-        // If an unverified user already exists for this email (abandoned signup),
-        // overwrite their details and re-issue an OTP rather than refusing — UX
-        // win + avoids orphaned rows pinning the unique email index.
-        let user;
-        if (existingEmail && !existingEmail.isOtpVerified) {
-            existingEmail.name = name;
-            existingEmail.phoneNumber = phoneNumber;
-            existingEmail.passwordHash = passwordHash;
-            existingEmail.authProvider = 'local';
-            user = await existingEmail.save();
-        } else {
-            user = await User.create({
-                name,
-                email,
-                phoneNumber,
-                phoneCountryCode: '+91',
-                passwordHash,
-                authProvider: 'local',
-                isOtpVerified: false,
-            });
+        // Unverified rows that collide on EITHER identifier are abandoned
+        // signups. Reclaim them by deleting and starting fresh — without this
+        // step, a half-finished signup permanently squats on the unique
+        // email/phone indexes and blocks anyone (including the same person
+        // retrying with corrected details) from completing later.
+        const abandoned = await User.find(
+            { isOtpVerified: false, $or: [{ email }, { phoneNumber }] },
+            { _id: 1 }
+        );
+        if (abandoned.length) {
+            const ids = abandoned.map((u) => u._id);
+            await User.deleteMany({ _id: { $in: ids } });
+            await OtpVerification.deleteMany({ userId: { $in: ids } });
         }
+
+        const passwordHash = await hashPassword(password);
+        const user = await User.create({
+            name,
+            email,
+            phoneNumber,
+            phoneCountryCode: '+91',
+            passwordHash,
+            authProvider: 'local',
+            isOtpVerified: false,
+        });
 
         const { plainOtp } = await createOtpRecord({
             userId: user._id,
