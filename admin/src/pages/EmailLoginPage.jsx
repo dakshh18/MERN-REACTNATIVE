@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { useLocalAuth } from "../lib/localAuth.jsx";
+import { useLocalAuth } from "../lib/useLocalAuth.js";
 
 function classifyIdentifier(input) {
   const s = input.trim();

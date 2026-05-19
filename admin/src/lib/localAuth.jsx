@@ -1,17 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { LocalAuthContext, TOKEN_KEY, USER_KEY } from "./useLocalAuth.js";
 
-// Local (email/password+OTP) auth for the admin SPA. Lives alongside Clerk —
-// either one can sign you in. Token + minimal user snapshot are stored in
-// localStorage; that's already the pattern Clerk uses internally for its own
-// session token, so we're not introducing a new persistence layer.
-
-const TOKEN_KEY = "admin.localAuth.token";
-const USER_KEY = "admin.localAuth.user";
+// Local (email/password+OTP) auth provider for the admin SPA. Lives alongside
+// Clerk — either one can sign you in. Token + minimal user snapshot are
+// stored in localStorage; that's already the pattern Clerk uses internally
+// for its own session token, so we're not introducing a new persistence
+// layer.
+//
+// The context, hook, and token-reader helper live in useLocalAuth.js so
+// this file can export only the provider component (Vite react-refresh
+// rule).
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-const LocalAuthContext = createContext(null);
 
 export function LocalAuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
@@ -98,18 +99,4 @@ export function LocalAuthProvider({ children }) {
   return (
     <LocalAuthContext.Provider value={value}>{children}</LocalAuthContext.Provider>
   );
-}
-
-export function useLocalAuth() {
-  const ctx = useContext(LocalAuthContext);
-  if (!ctx) {
-    throw new Error("useLocalAuth must be used inside <LocalAuthProvider>");
-  }
-  return ctx;
-}
-
-// Read the raw token without subscribing to a re-render — used by axios
-// interceptor where we just want the latest value.
-export function getLocalAuthToken() {
-  return localStorage.getItem(TOKEN_KEY);
 }

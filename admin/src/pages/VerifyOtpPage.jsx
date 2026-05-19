@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useLocalAuth } from "../lib/localAuth.jsx";
+import { useLocalAuth } from "../lib/useLocalAuth.js";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 

@@ -4,7 +4,7 @@ import EmailLoginPage from "./pages/EmailLoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import { useAuth } from "@clerk/clerk-react";
-import { useLocalAuth } from "./lib/localAuth.jsx";
+import { useLocalAuth } from "./lib/useLocalAuth.js";
 import DashboardPage from "./pages/DashboardPage";
 import ProductsPage from "./pages/ProductsPage";
 import OrdersPage from "./pages/OrdersPage";

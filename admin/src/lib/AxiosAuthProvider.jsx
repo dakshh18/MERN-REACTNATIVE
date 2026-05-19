@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect } from "react";
 import axiosInstance from "./axios";
-import { getLocalAuthToken } from "./localAuth.jsx";
+import { getLocalAuthToken } from "./useLocalAuth.js";
 
 export function AxiosAuthProvider({ children }) {
   const { getToken } = useAuth();

@@ -1,6 +1,6 @@
 import { UserButton, useAuth } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router";
-import { useLocalAuth } from "../lib/localAuth.jsx";
+import { useLocalAuth } from "../lib/useLocalAuth.js";
 
 import {
   ClipboardListIcon,
