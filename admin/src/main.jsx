@@ -9,6 +9,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router";
 import * as Sentry from "@sentry/react";
 import { AxiosAuthProvider } from "./lib/AxiosAuthProvider.jsx";
+import { LocalAuthProvider } from "./lib/localAuth.jsx";
 
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -39,11 +40,13 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <AxiosAuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <App />
-          </QueryClientProvider>
-        </AxiosAuthProvider>
+        <LocalAuthProvider>
+          <AxiosAuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <App />
+            </QueryClientProvider>
+          </AxiosAuthProvider>
+        </LocalAuthProvider>
       </ClerkProvider>
     </BrowserRouter>
   </StrictMode>

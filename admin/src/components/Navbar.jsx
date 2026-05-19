@@ -1,9 +1,11 @@
-import { UserButton } from "@clerk/clerk-react";
-import { useLocation } from "react-router";
+import { UserButton, useAuth } from "@clerk/clerk-react";
+import { useLocation, useNavigate } from "react-router";
+import { useLocalAuth } from "../lib/localAuth.jsx";
 
 import {
   ClipboardListIcon,
   HomeIcon,
+  LogOutIcon,
   PanelLeftIcon,
   ShoppingBagIcon,
   UsersIcon,
@@ -19,6 +21,10 @@ export const NAVIGATION = [
 
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isSignedIn: clerkSignedIn } = useAuth();
+  const { isSignedIn: localSignedIn, user: localUser, signOut: localSignOut } =
+    useLocalAuth();
 
   return (
     <div className="navbar w-full bg-base-300">
@@ -32,8 +38,29 @@ function Navbar() {
         </h1>
       </div>
 
-      <div className="mr-5">
-        <UserButton />
+      {/* Clerk user → Clerk's UserButton with built-in menu.
+          Local user → our own little avatar + sign-out button. */}
+      <div className="mr-5 flex items-center gap-3">
+        {clerkSignedIn && <UserButton />}
+        {!clerkSignedIn && localSignedIn && (
+          <>
+            <span className="text-sm opacity-80 hidden sm:inline">
+              {localUser?.name || localUser?.email}
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                localSignOut();
+                navigate("/login");
+              }}
+              aria-label="Sign out"
+            >
+              <LogOutIcon className="size-4" />
+              Sign out
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ import useWishList from '@/hooks/useWishList'
 import useOrders from '@/hooks/useOrders'
 import { router } from 'expo-router'
 import Toast from 'react-native-toast-message'
+import { useLocalAuth } from '@/hooks/useLocalAuth'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -29,6 +30,7 @@ interface MenuItem {
 const ProfileScreen = () => {
   const { user, isLoaded } = useUser()
   const { signOut } = useAuth()
+  const localAuth = useLocalAuth()
   const { itemCount } = useCart()
   const { wishListCount } = useWishList()
   const { orderCount } = useOrders()
@@ -40,7 +42,9 @@ const ProfileScreen = () => {
         text: 'Sign out',
         style: 'destructive',
         onPress: async () => {
-          await signOut()
+          // Sign out from BOTH systems regardless of which the user came in via,
+          // so we never leave a stale token lying around in SecureStore.
+          await Promise.allSettled([signOut(), localAuth.signOut()])
           router.replace('/(auth)')
         },
       },
@@ -91,12 +95,17 @@ const ProfileScreen = () => {
     )
   }
 
+  // Prefer Clerk's profile; fall back to the local-auth user snapshot for
+  // email/password+OTP users.
   const displayName =
     user?.fullName ||
     user?.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+    localAuth.user?.name ||
+    localAuth.user?.email?.split('@')[0] ||
     'Shopper'
-  const email = user?.primaryEmailAddress?.emailAddress ?? ''
-  const avatar = user?.imageUrl
+  const email =
+    user?.primaryEmailAddress?.emailAddress ?? localAuth.user?.email ?? ''
+  const avatar = user?.imageUrl || localAuth.user?.imageUrl
 
   return (
     <SafeScreen>

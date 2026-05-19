@@ -4,13 +4,15 @@ import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from '@clerk/clerk-expo'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur'
+import { useLocalAuth } from '@/hooks/useLocalAuth'
 
 const TabsLayout = () => {
-    const { isSignedIn, isLoaded } = useAuth();
+    const { isSignedIn: clerkSignedIn, isLoaded: clerkLoaded } = useAuth();
+    const { isSignedIn: localSignedIn, isLoaded: localLoaded } = useLocalAuth();
     const insets = useSafeAreaInsets();
 
-    if (!isLoaded) return null
-    if (!isSignedIn) return <Redirect href={"/(auth)"} />
+    if (!clerkLoaded || !localLoaded) return null
+    if (!clerkSignedIn && !localSignedIn) return <Redirect href={"/(auth)"} />
     return (
         <Tabs
             screenOptions={{

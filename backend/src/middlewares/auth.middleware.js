@@ -1,8 +1,14 @@
 import { requireAuth, clerkClient } from "@clerk/express";
 import { User } from "../models/user.model.js";
 import { ENV } from "../config/env.js";
+import { tryLocalAuth } from "./localAuth.middleware.js";
 
-export const protectRoute = [
+// Strategy: if the request carries a valid local JWT (our email/password+OTP
+// users), tryLocalAuth attaches req.user and we short-circuit. Otherwise we
+// fall through to Clerk's requireAuth + the existing Mongo-provisioning step.
+// This lets every existing /api/* route accept EITHER auth method transparently.
+
+const clerkBranch = [
     requireAuth(),
     async (req, res, next) => {
         try {
@@ -45,6 +51,7 @@ export const protectRoute = [
                             imageUrl: clerkUser.imageUrl || "",
                             addresses: [],
                             wishlist: [],
+                            authProvider: 'clerk',
                         },
                     },
                     { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -52,12 +59,29 @@ export const protectRoute = [
             }
 
             req.user = user;
+            req.authKind = 'clerk';
             next();
         } catch (error) {
             console.error("Error in protectRoute middleware:", error);
             return res.status(500).json({ message: "Internal server error" });
         }
     }
+];
+
+// Chain: tryLocalAuth (sets req.user if our JWT matches) → if no user, fall
+// into Clerk's requireAuth + provisioning. Returning early from Clerk's chain
+// keeps the existing behaviour for Clerk-signed-in clients.
+export const protectRoute = [
+    tryLocalAuth,
+    (req, res, next) => {
+        if (req.user) return next();
+        // Hand off to the Clerk chain.
+        const [requireAuthMw, clerkResolver] = clerkBranch;
+        requireAuthMw(req, res, (err) => {
+            if (err) return next(err);
+            clerkResolver(req, res, next);
+        });
+    },
 ];
 
 export const adminOnly = (req, res, next) => {
