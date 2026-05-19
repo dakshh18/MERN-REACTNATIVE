@@ -18,7 +18,6 @@ import useAddresses, { AddressInput } from '@/hooks/useAddresses'
 import { Ionicons } from '@expo/vector-icons'
 import Toast from 'react-native-toast-message'
 import { Address } from '@/types'
-
 const emptyForm: AddressInput = {
   label: 'Home',
   fullName: '',
