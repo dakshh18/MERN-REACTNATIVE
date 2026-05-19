@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { clerkMiddleware } from '@clerk/express'
@@ -87,6 +88,8 @@ if (ENV.NODE_ENV === "production") {
 //     connectDB();
 // });
 
+export { app };
+
 const startServer = async () => {
     await connectDB();
     app.listen(ENV.PORT, () => {
@@ -94,4 +97,11 @@ const startServer = async () => {
     });
 }
 
-startServer();
+// Only auto-start when run directly (e.g. `node src/server.js`). When tests
+// import { app }, this branch is skipped so they can supply their own DB.
+// fileURLToPath handles Windows drive letters; plain URL().pathname doesn't.
+const entryPath = process.argv[1] && path.resolve(process.argv[1]);
+const thisPath = fileURLToPath(import.meta.url);
+if (entryPath === thisPath) {
+    startServer();
+}

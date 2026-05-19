@@ -61,7 +61,7 @@ jobs:
         run: npx tsc --noEmit
 
   backend:
-    name: Backend (install + syntax check)
+    name: Backend (syntax check + tests)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,8 +75,19 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
+      # Cache the MongoDB binary that mongodb-memory-server downloads,
+      # so subsequent CI runs don't re-download ~80 MB.
+      - name: Cache mongodb-memory-server binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: ${{ runner.os }}-mongo-mem-v1
+
       - name: Install dependencies
         run: npm ci
 
       - name: Syntax check entry point
         run: node --check src/server.js
+
+      - name: Run tests (Vitest + in-memory replica set)
+        run: npm test
