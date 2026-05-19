@@ -8,9 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  findNodeHandle,
 } from 'react-native'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import SafeScreen from '@/components/SafeScreen'
 import ScreenHeader from '@/components/ScreenHeader'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -45,6 +46,33 @@ const AddressesScreen = () => {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [form, setForm] = useState<AddressInput>(emptyForm)
   const [deleteTarget, setDeleteTarget] = useState<Address | null>(null)
+
+  // Form ScrollView ref + a focus handler that scrolls the focused TextInput
+  // above the keyboard. Android with windowSoftInputMode=adjustResize shrinks
+  // the modal but doesn't auto-scroll the focused input into view — we have
+  // to do that ourselves by measuring the input's position within the
+  // ScrollView and calling scrollTo.
+  const formScrollRef = useRef<ScrollView>(null)
+  const handleFieldFocus = (input: TextInput | null) => {
+    if (!input || !formScrollRef.current) return
+    const scrollNode = findNodeHandle(formScrollRef.current)
+    if (!scrollNode) return
+    // Small delay so the keyboard animation has started and the ScrollView's
+    // height has been resized — otherwise measureLayout returns the
+    // pre-resize y and we under-scroll.
+    setTimeout(() => {
+      input.measureLayout(
+        scrollNode,
+        (_x, y) => {
+          formScrollRef.current?.scrollTo({
+            y: Math.max(0, y - 24),
+            animated: true,
+          })
+        },
+        () => {}
+      )
+    }, 250)
+  }
 
   const openAddForm = () => {
     setEditingAddress(null)
@@ -298,20 +326,25 @@ const AddressesScreen = () => {
             </View>
 
             <ScrollView
+              ref={formScrollRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps='handled'
-              contentContainerStyle={{ paddingBottom: 24 }}
+              // paddingBottom is intentionally large — gives room to scroll the
+              // bottom-most field (Phone) above the Android keyboard.
+              contentContainerStyle={{ paddingBottom: 320 }}
             >
               <Field
                 label='Label'
                 value={form.label}
                 placeholder='Home, Office...'
                 onChangeText={(v) => setForm((f) => ({ ...f, label: v }))}
+                onInputFocus={handleFieldFocus}
               />
               <Field
                 label='Full Name'
                 value={form.fullName}
                 onChangeText={(v) => setForm((f) => ({ ...f, fullName: v }))}
+                onInputFocus={handleFieldFocus}
               />
               <Field
                 label='Street Address'
@@ -319,6 +352,7 @@ const AddressesScreen = () => {
                 onChangeText={(v) =>
                   setForm((f) => ({ ...f, streetAddress: v }))
                 }
+                onInputFocus={handleFieldFocus}
               />
               <View className='flex-row gap-3'>
                 <View className='flex-1'>
@@ -326,6 +360,7 @@ const AddressesScreen = () => {
                     label='City'
                     value={form.city}
                     onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
+                    onInputFocus={handleFieldFocus}
                   />
                 </View>
                 <View className='flex-1'>
@@ -333,6 +368,7 @@ const AddressesScreen = () => {
                     label='State'
                     value={form.state}
                     onChangeText={(v) => setForm((f) => ({ ...f, state: v }))}
+                    onInputFocus={handleFieldFocus}
                   />
                 </View>
               </View>
@@ -346,6 +382,7 @@ const AddressesScreen = () => {
                     onChangeText={(v) =>
                       setForm((f) => ({ ...f, zipCode: v.replace(/\D/g, '') }))
                     }
+                    onInputFocus={handleFieldFocus}
                   />
                 </View>
                 <View className='flex-1'>
@@ -360,6 +397,7 @@ const AddressesScreen = () => {
                         phoneNumber: v.replace(/\D/g, ''),
                       }))
                     }
+                    onInputFocus={handleFieldFocus}
                   />
                 </View>
               </View>
@@ -431,6 +469,9 @@ interface FieldProps {
   keyboardType?: 'default' | 'number-pad' | 'phone-pad'
   maxLength?: number
   onChangeText: (v: string) => void
+  // Called with the TextInput component instance on focus. The parent uses
+  // it to scroll the focused input above the Android soft keyboard.
+  onInputFocus?: (input: TextInput | null) => void
 }
 
 const Field: React.FC<FieldProps> = ({
@@ -440,19 +481,25 @@ const Field: React.FC<FieldProps> = ({
   keyboardType = 'default',
   maxLength,
   onChangeText,
-}) => (
-  <View className='mb-3'>
-    <Text className='text-text-secondary text-xs mb-1.5 ml-1'>{label}</Text>
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor='#666'
-      keyboardType={keyboardType}
-      maxLength={maxLength}
-      className='bg-surface text-text-primary rounded-2xl px-4 py-3'
-    />
-  </View>
-)
+  onInputFocus,
+}) => {
+  const inputRef = useRef<TextInput>(null)
+  return (
+    <View className='mb-3'>
+      <Text className='text-text-secondary text-xs mb-1.5 ml-1'>{label}</Text>
+      <TextInput
+        ref={inputRef}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor='#666'
+        keyboardType={keyboardType}
+        maxLength={maxLength}
+        onFocus={() => onInputFocus?.(inputRef.current)}
+        className='bg-surface text-text-primary rounded-2xl px-4 py-3'
+      />
+    </View>
+  )
+}
 
 export default AddressesScreen
