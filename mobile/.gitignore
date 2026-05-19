@@ -19,7 +19,10 @@ expo-env.d.ts
 *.mobileprovision
 
 # Firebase
-google-services.json
+# google-services.json and GoogleService-Info.plist are NOT secrets — Firebase
+# explicitly says these client config files are safe to commit. We need them
+# committed so EAS Build can package them into release APKs.
+# google-services.json
 GoogleService-Info.plist
 
 # Metro

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "152219588425",
+    "project_id": "mern-shop-37a1d",
+    "storage_bucket": "mern-shop-37a1d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:152219588425:android:3b9d500452055839e9ec98",
+        "android_client_info": {
+          "package_name": "com.mernandreactnative.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB99J40RIQbPcHBW6DQiju3aRzowtQUVQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
