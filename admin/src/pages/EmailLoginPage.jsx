@@ -2,16 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLocalAuth } from "../lib/useLocalAuth.js";
 
-function classifyIdentifier(input) {
-  const s = input.trim();
-  if (s.includes("@")) return { email: s.toLowerCase() };
-  return { phoneNumber: s };
-}
-
 function EmailLoginPage() {
   const { loginStart } = useLocalAuth();
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -20,17 +14,16 @@ function EmailLoginPage() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!identifier.trim()) return setError("Enter your email or phone number.");
+    if (!email.includes("@")) return setError("Enter a valid email.");
     if (!password) return setError("Enter your password.");
 
     setSubmitting(true);
     try {
-      const ids = classifyIdentifier(identifier);
-      const res = await loginStart({ ...ids, password });
+      const normalizedEmail = email.trim().toLowerCase();
+      const res = await loginStart({ email: normalizedEmail, password });
       const qs = new URLSearchParams({
         purpose: "login",
-        email: res.email || ids.email || "",
-        phoneNumber: !ids.email ? ids.phoneNumber || "" : "",
+        email: res.email || normalizedEmail,
       });
       navigate(`/verify-otp?${qs.toString()}`);
     } catch (err) {
@@ -51,20 +44,20 @@ function EmailLoginPage() {
           <form className="card-body" onSubmit={onSubmit}>
             <h1 className="text-2xl font-bold">Sign in with email</h1>
             <p className="text-sm opacity-70 -mt-1">
-              We&apos;ll text and email you a 6-digit OTP.
+              We&apos;ll email you a 6-digit OTP.
             </p>
 
             <label className="form-control w-full">
               <div className="label">
-                <span className="label-text">Email or phone</span>
+                <span className="label-text">Email</span>
               </div>
               <input
-                type="text"
-                placeholder="you@example.com or 9876543210"
+                type="email"
+                placeholder="you@example.com"
                 className="input input-bordered"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </label>

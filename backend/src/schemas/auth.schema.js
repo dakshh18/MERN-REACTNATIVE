@@ -35,7 +35,10 @@ export const registerStartSchema = z.object({
         name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80),
         email: z.string().email().toLowerCase().trim(),
         password: z.string().min(8, 'Password must be at least 8 characters').max(128),
-        phoneNumber: indianPhone,
+        // Phone is optional: OTP delivery is email-only in this build (no free
+        // SMS channel). The field + indianPhone validation stay so a future
+        // SMS provider can be re-enabled without a schema change.
+        phoneNumber: indianPhone.optional(),
     }),
 });
 

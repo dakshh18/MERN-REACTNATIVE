@@ -9,7 +9,6 @@ function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    phoneNumber: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -24,9 +23,6 @@ function RegisterPage() {
     if (form.name.trim().length < 2) return setError("Name must be at least 2 characters.");
     if (!form.email.includes("@")) return setError("Enter a valid email.");
     if (form.password.length < 8) return setError("Password must be at least 8 characters.");
-    if (!/^[6-9]\d{9}$/.test(form.phoneNumber)) {
-      return setError("Enter a valid Indian mobile (10 digits, starts with 6/7/8/9).");
-    }
 
     setSubmitting(true);
     try {
@@ -34,7 +30,6 @@ function RegisterPage() {
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
-        phoneNumber: form.phoneNumber.trim(),
       });
       navigate(
         `/verify-otp?purpose=register&email=${encodeURIComponent(res.email || form.email.trim())}`
@@ -57,7 +52,7 @@ function RegisterPage() {
           <form className="card-body" onSubmit={onSubmit}>
             <h1 className="text-2xl font-bold">Create admin account</h1>
             <p className="text-sm opacity-70 -mt-1">
-              We&apos;ll send a 6-digit OTP to your email and phone to verify.
+              We&apos;ll send a 6-digit OTP to your email to verify it.
             </p>
 
             <label className="form-control w-full">
@@ -113,31 +108,6 @@ function RegisterPage() {
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
-              </div>
-            </label>
-
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text">Phone (India)</span>
-              </div>
-              <div className="join">
-                <span className="join-item btn btn-disabled no-animation">+91</span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="9876543210"
-                  className="input input-bordered join-item w-full"
-                  value={form.phoneNumber}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      phoneNumber: e.target.value.replace(/[^0-9]/g, "").slice(0, 10),
-                    }))
-                  }
-                  maxLength={10}
-                  autoComplete="tel-national"
-                  required
-                />
               </div>
             </label>
 

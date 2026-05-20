@@ -47,18 +47,18 @@ async function findByEmailOrPhone({ email, phoneNumber }, { withPassword = false
 
 // Generic message used wherever we want to avoid leaking which identifier
 // belongs to a real account.
-const GENERIC_OK = 'If the details are valid, an OTP has been sent to the registered email and phone.';
+const GENERIC_OK = 'If the details are valid, an OTP has been sent to the registered email.';
 
-// Best-effort fan-out: send OTP via email + SMS in parallel. We don't fail the
-// HTTP request if one of them is down (e.g. Mailpit not running locally) —
-// providers log loudly to stderr instead.
+// Best-effort fan-out: always email the OTP; also SMS it if the user has a
+// phone on file. We don't fail the HTTP request if a provider is down —
+// providers log loudly to stderr instead. SMS is skipped entirely when
+// phoneNumber is absent (the default in this email-only build).
 async function dispatchOtp({ email, phoneNumber, otp }) {
-    const emailProvider = getEmailProvider();
-    const smsProvider = getSmsProvider();
-    await Promise.allSettled([
-        emailProvider.sendOtpEmail(email, otp),
-        smsProvider.sendOtpSms(phoneNumber, otp),
-    ]);
+    const tasks = [getEmailProvider().sendOtpEmail(email, otp)];
+    if (phoneNumber) {
+        tasks.push(getSmsProvider().sendOtpSms(phoneNumber, otp));
+    }
+    await Promise.allSettled(tasks);
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -68,12 +68,9 @@ export const registerStart = async (req, res) => {
     try {
         const { name, password } = req.body;
         const email = String(req.body.email || '').toLowerCase().trim();
+        // Phone is optional in this email-only build. If supplied (e.g. via a
+        // direct API call) it's still validated and used for SMS.
         const phoneNumber = normalizePhoneInput(req.body.phoneNumber);
-        if (!phoneNumber) {
-            return res.status(400).json({
-                message: 'Enter a valid Indian mobile number (10 digits, starting with 6/7/8/9).',
-            });
-        }
 
         // Verified users own their email/phone — anyone else trying to use
         // them is rejected.
@@ -81,9 +78,11 @@ export const registerStart = async (req, res) => {
         if (verifiedEmail) {
             return res.status(409).json({ message: 'An account with this email already exists.' });
         }
-        const verifiedPhone = await User.findOne({ phoneNumber, isOtpVerified: true });
-        if (verifiedPhone) {
-            return res.status(409).json({ message: 'An account with this phone number already exists.' });
+        if (phoneNumber) {
+            const verifiedPhone = await User.findOne({ phoneNumber, isOtpVerified: true });
+            if (verifiedPhone) {
+                return res.status(409).json({ message: 'An account with this phone number already exists.' });
+            }
         }
 
         // Unverified rows that collide on EITHER identifier are abandoned
@@ -91,8 +90,10 @@ export const registerStart = async (req, res) => {
         // step, a half-finished signup permanently squats on the unique
         // email/phone indexes and blocks anyone (including the same person
         // retrying with corrected details) from completing later.
+        const orConds = [{ email }];
+        if (phoneNumber) orConds.push({ phoneNumber });
         const abandoned = await User.find(
-            { isOtpVerified: false, $or: [{ email }, { phoneNumber }] },
+            { isOtpVerified: false, $or: orConds },
             { _id: 1 }
         );
         if (abandoned.length) {
@@ -105,7 +106,9 @@ export const registerStart = async (req, res) => {
         const user = await User.create({
             name,
             email,
-            phoneNumber,
+            // Omit phoneNumber entirely when absent so the sparse unique index
+            // doesn't see a null collision across phone-less users.
+            ...(phoneNumber ? { phoneNumber } : {}),
             phoneCountryCode: '+91',
             passwordHash,
             authProvider: 'local',
@@ -122,7 +125,7 @@ export const registerStart = async (req, res) => {
         await dispatchOtp({ email: user.email, phoneNumber: user.phoneNumber, otp: plainOtp });
 
         return res.status(200).json({
-            message: 'OTP sent to your email and phone. Enter it to finish creating your account.',
+            message: 'OTP sent to your email. Enter it to finish creating your account.',
             // Identifier the client should echo back on /verify.
             email: user.email,
         });
@@ -214,7 +217,7 @@ export const loginStart = async (req, res) => {
         await dispatchOtp({ email: user.email, phoneNumber: user.phoneNumber, otp: plainOtp });
 
         return res.status(200).json({
-            message: 'OTP sent to your email and phone. Enter it to finish signing in.',
+            message: 'OTP sent to your email. Enter it to finish signing in.',
             email: user.email,
         });
     } catch (err) {

@@ -76,7 +76,7 @@ export function useLocalAuth() {
     }, [])
 
     const registerStart = useCallback(
-        async (input: { name: string; email: string; password: string; phoneNumber: string }) => {
+        async (input: { name: string; email: string; password: string }) => {
             const res = await axios.post<StartResponse>(`${API_URL}/auth/register/start`, input)
             return res.data
         },
@@ -84,7 +84,7 @@ export function useLocalAuth() {
     )
 
     const loginStart = useCallback(
-        async (input: { email?: string; phoneNumber?: string; password: string }) => {
+        async (input: { email: string; password: string }) => {
             const res = await axios.post<StartResponse>(`${API_URL}/auth/login/start`, input)
             return res.data
         },
@@ -94,7 +94,6 @@ export function useLocalAuth() {
     const verifyOtp = useCallback(
         async (input: {
             email?: string
-            phoneNumber?: string
             otp: string
             purpose: 'register' | 'login'
         }) => {
@@ -102,7 +101,6 @@ export function useLocalAuth() {
                 input.purpose === 'register' ? '/auth/register/verify' : '/auth/login/verify'
             const res = await axios.post<VerifyResponse>(`${API_URL}${path}`, {
                 email: input.email,
-                phoneNumber: input.phoneNumber,
                 otp: input.otp,
             })
             await persist(res.data.token, res.data.user)
@@ -114,7 +112,6 @@ export function useLocalAuth() {
     const resendOtp = useCallback(
         async (input: {
             email?: string
-            phoneNumber?: string
             purpose: 'register' | 'login'
         }) => {
             const res = await axios.post(`${API_URL}/auth/otp/resend`, input)

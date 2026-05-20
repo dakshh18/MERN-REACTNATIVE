@@ -19,7 +19,6 @@ const RegisterScreen = () => {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [phone, setPhone] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -29,18 +28,12 @@ const RegisterScreen = () => {
         if (name.trim().length < 2) return setError('Name must be at least 2 characters.')
         if (!email.includes('@')) return setError('Enter a valid email.')
         if (password.length < 8) return setError('Password must be at least 8 characters.')
-        if (!/^[6-9]\d{9}$/.test(phone)) {
-            return setError(
-                'Enter a valid Indian mobile (10 digits, starts with 6/7/8/9).'
-            )
-        }
         setSubmitting(true)
         try {
             const res = await registerStart({
                 name: name.trim(),
                 email: email.trim(),
                 password,
-                phoneNumber: phone.trim(),
             })
             Toast.show({ type: 'success', text1: 'OTP sent', text2: res.message, topOffset: 60 })
             // Cast is harmless — the route exists in the (auth) group. Expo
@@ -84,8 +77,8 @@ const RegisterScreen = () => {
                             Create account
                         </Text>
                         <Text className='text-text-secondary text-sm mt-2'>
-                            Sign up with email and your Indian mobile number. We&apos;ll send a
-                            6-digit OTP to verify.
+                            Sign up with your email. We&apos;ll send a 6-digit OTP to
+                            verify it.
                         </Text>
 
                         <View className='mt-8 gap-3'>
@@ -129,16 +122,6 @@ const RegisterScreen = () => {
                                         />
                                     </TouchableOpacity>
                                 }
-                            />
-                            <Field
-                                label='Phone (India)'
-                                icon='call-outline'
-                                value={phone}
-                                onChangeText={(v) => setPhone(v.replace(/[^0-9]/g, ''))}
-                                placeholder='9876543210'
-                                keyboardType='number-pad'
-                                maxLength={10}
-                                prefix='+91'
                             />
                         </View>
 

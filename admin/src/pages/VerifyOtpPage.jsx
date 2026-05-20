@@ -9,7 +9,6 @@ function VerifyOtpPage() {
   const [params] = useSearchParams();
   const purpose = params.get("purpose") === "login" ? "login" : "register";
   const email = params.get("email") || "";
-  const phoneNumber = params.get("phoneNumber") || "";
   const { verifyOtp, resendOtp } = useLocalAuth();
 
   const [otp, setOtp] = useState("");
@@ -38,7 +37,6 @@ function VerifyOtpPage() {
     try {
       await verifyOtp({
         email: email || undefined,
-        phoneNumber: phoneNumber || undefined,
         otp,
         purpose,
       });
@@ -60,7 +58,6 @@ function VerifyOtpPage() {
     try {
       await resendOtp({
         email: email || undefined,
-        phoneNumber: phoneNumber || undefined,
         purpose,
       });
       setSecondsLeft(RESEND_COOLDOWN_SECONDS);
@@ -73,7 +70,7 @@ function VerifyOtpPage() {
     }
   };
 
-  const displayTarget = email || phoneNumber || "your email and phone";
+  const displayTarget = email || "your email";
 
   return (
     <div className="hero min-h-screen bg-base-200">
@@ -82,7 +79,7 @@ function VerifyOtpPage() {
           <form className="card-body" onSubmit={onVerify}>
             <h1 className="text-2xl font-bold">Enter OTP</h1>
             <p className="text-sm opacity-70 -mt-1">
-              We sent a 6-digit code to your email and phone number.
+              We sent a 6-digit code to your email.
             </p>
             <p className="text-xs opacity-60">{displayTarget}</p>
 

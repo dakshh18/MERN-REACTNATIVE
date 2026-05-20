@@ -21,7 +21,6 @@ const RESEND_COOLDOWN_SECONDS = 60
 const VerifyOtpScreen = () => {
     const params = useLocalSearchParams<{
         email?: string
-        phoneNumber?: string
         purpose?: string
     }>()
     const purpose = (params.purpose === 'login' ? 'login' : 'register') as
@@ -55,7 +54,6 @@ const VerifyOtpScreen = () => {
         try {
             await verifyOtp({
                 email: params.email || undefined,
-                phoneNumber: params.phoneNumber || undefined,
                 otp,
                 purpose,
             })
@@ -82,13 +80,12 @@ const VerifyOtpScreen = () => {
         try {
             await resendOtp({
                 email: params.email || undefined,
-                phoneNumber: params.phoneNumber || undefined,
                 purpose,
             })
             Toast.show({
                 type: 'success',
                 text1: 'OTP re-sent',
-                text2: 'Check your email and phone.',
+                text2: 'Check your email inbox.',
                 topOffset: 60,
             })
             setSecondsLeft(RESEND_COOLDOWN_SECONDS)
@@ -101,8 +98,7 @@ const VerifyOtpScreen = () => {
         }
     }
 
-    const displayTarget =
-        params.email || params.phoneNumber || 'your email and phone'
+    const displayTarget = params.email || 'your email'
 
     return (
         <View className='flex-1 bg-background'>
@@ -127,7 +123,7 @@ const VerifyOtpScreen = () => {
                             Enter OTP
                         </Text>
                         <Text className='text-text-secondary text-sm mt-2'>
-                            We sent a 6-digit code to your email and phone number.
+                            We sent a 6-digit code to your email.
                         </Text>
                         <Text className='text-text-secondary text-xs mt-1'>{displayTarget}</Text>
 

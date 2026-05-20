@@ -24,9 +24,9 @@ const otpVerificationSchema = new mongoose.Schema(
             trim: true,
             index: true,
         },
+        // Optional: email-only signups have no phone. Kept for the SMS path.
         phoneNumber: {
             type: String,
-            required: true,
             index: true,
         },
         otpHash: {

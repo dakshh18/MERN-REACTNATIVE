@@ -179,6 +179,31 @@ describe('Register → verify happy path', () => {
         expect(updated.isOtpVerified).toBe(true);
     });
 
+    it('registers with email only (no phone) and sends OTP via email alone', async () => {
+        const startRes = await request(app)
+            .post('/api/auth/register/start')
+            .send({
+                name: 'Phoneless',
+                email: 'nophone@example.com',
+                password: 'correct-horse-battery-staple',
+            });
+        expect(startRes.status).toBe(200);
+
+        // Email OTP sent; SMS skipped entirely (no phone on file).
+        expect(emailCalls).toHaveLength(1);
+        expect(smsCalls).toHaveLength(0);
+
+        const user = await User.findOne({ email: 'nophone@example.com' });
+        expect(user).toBeTruthy();
+        expect(user.phoneNumber).toBeUndefined();
+
+        const verifyRes = await request(app)
+            .post('/api/auth/register/verify')
+            .send({ email: 'nophone@example.com', otp: lastSentOtp() });
+        expect(verifyRes.status).toBe(200);
+        expect(verifyRes.body.token).toBeDefined();
+    });
+
     it('rejects an incorrect OTP and tracks attempts', async () => {
         await request(app).post('/api/auth/register/start').send(baseInput);
 

@@ -14,18 +14,9 @@ import { Ionicons } from '@expo/vector-icons'
 import Toast from 'react-native-toast-message'
 import { useLocalAuth } from '@/hooks/useLocalAuth'
 
-// Accepts either an email or an Indian phone in the same field, with a quick
-// regex sniff to decide which one the server should match. Keeps the UI
-// uncluttered for users who don't remember which they registered with.
-function classifyIdentifier(input: string): { email?: string; phoneNumber?: string } {
-    const s = input.trim()
-    if (s.includes('@')) return { email: s.toLowerCase() }
-    return { phoneNumber: s }
-}
-
 const LoginScreen = () => {
     const { loginStart } = useLocalAuth()
-    const [identifier, setIdentifier] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -33,13 +24,12 @@ const LoginScreen = () => {
 
     const onSubmit = async () => {
         setError(null)
-        if (!identifier.trim()) return setError('Enter your email or phone number.')
+        if (!email.includes('@')) return setError('Enter a valid email.')
         if (!password) return setError('Enter your password.')
 
         setSubmitting(true)
         try {
-            const { email, phoneNumber } = classifyIdentifier(identifier)
-            const res = await loginStart({ email, phoneNumber, password })
+            const res = await loginStart({ email: email.trim().toLowerCase(), password })
             Toast.show({
                 type: 'success',
                 text1: 'OTP sent',
@@ -52,8 +42,7 @@ const LoginScreen = () => {
             router.push({
                 pathname: '/(auth)/verify-otp' as any,
                 params: {
-                    email: res.email || email || '',
-                    phoneNumber: !email ? phoneNumber || '' : '',
+                    email: res.email || email.trim().toLowerCase(),
                     purpose: 'login',
                 },
             })
@@ -91,25 +80,26 @@ const LoginScreen = () => {
                             Welcome back
                         </Text>
                         <Text className='text-text-secondary text-sm mt-2'>
-                            Sign in with email or phone. We&apos;ll text and email you a
-                            6-digit OTP.
+                            Sign in with your email. We&apos;ll send a 6-digit OTP to
+                            verify it&apos;s you.
                         </Text>
 
                         <View className='mt-8 gap-3'>
                             <View>
                                 <Text className='text-text-secondary text-xs ml-1 mb-1'>
-                                    Email or phone
+                                    Email
                                 </Text>
                                 <View className='flex-row items-center bg-surface rounded-2xl px-4 py-3'>
-                                    <Ionicons name='person-outline' size={18} color='#888' />
+                                    <Ionicons name='mail-outline' size={18} color='#888' />
                                     <TextInput
-                                        value={identifier}
-                                        onChangeText={setIdentifier}
-                                        placeholder='you@example.com or 9876543210'
+                                        value={email}
+                                        onChangeText={setEmail}
+                                        placeholder='you@example.com'
                                         placeholderTextColor='#666'
                                         className='flex-1 ml-2 text-text-primary text-base'
                                         autoCapitalize='none'
                                         keyboardType='email-address'
+                                        textContentType='emailAddress'
                                     />
                                 </View>
                             </View>
