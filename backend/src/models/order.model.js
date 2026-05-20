@@ -53,13 +53,11 @@ const shippingAddressSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
+    // Orders are keyed by the Mongo user _id (works for Clerk + local users).
+    // Indexed because getOrders queries `Order.find({ user })`.
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
-    },
-    clerkId: {
-        type: String,
         required: true,
         index: true,
     },

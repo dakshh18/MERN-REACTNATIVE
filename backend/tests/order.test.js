@@ -37,6 +37,7 @@ import { app } from '../src/server.js';
 import { Product } from '../src/models/product.model.js';
 import { Order } from '../src/models/order.model.js';
 import { Cart } from '../src/models/cart.model.js';
+import { User } from '../src/models/user.model.js';
 import { stripe } from '../src/config/stripe.js';
 import { setupTestDB, teardownTestDB, clearTestDB } from './helpers.js';
 
@@ -75,13 +76,14 @@ const validShippingAddress = {
 describe('POST /api/orders — happy path (transactional)', () => {
     it('creates an order, decrements stock, and clears the cart in one transaction', async () => {
         const product = await seedProductInCart({ stock: 5, price: 100, quantity: 2 });
+        const user = await User.findOne({ clerkId: 'test-user' });
 
         // Stripe says payment succeeded for the exact expected amount (200 + 5 shipping = 205 USD = 20500 cents).
         stripe.paymentIntents.retrieve.mockResolvedValue({
             id: 'pi_test_happy',
             status: 'succeeded',
             amount: 20500,
-            metadata: { clerkId: 'test-user' },
+            metadata: { userId: user._id.toString() },
         });
 
         const res = await request(app)
@@ -102,7 +104,7 @@ describe('POST /api/orders — happy path (transactional)', () => {
         const refreshedProduct = await Product.findById(product._id);
         expect(refreshedProduct.stock).toBe(3); // 5 - 2
 
-        const cart = await Cart.findOne({ clerkId: 'test-user' });
+        const cart = await Cart.findOne({ user: user._id });
         expect(cart.items).toEqual([]);
     });
 });
@@ -116,6 +118,7 @@ describe('POST /api/orders — atomic stock guard', () => {
         // (the conditional { stock: { $gte: 3 } } "lost the race"). The inner 409 guard
         // must fire and the transaction must roll back cleanly.
         const product = await seedProductInCart({ stock: 10, price: 100, quantity: 3 });
+        const user = await User.findOne({ clerkId: 'test-user' });
         const spy = vi.spyOn(Product, 'findOneAndUpdate').mockResolvedValueOnce(null);
 
         const res = await request(app)
@@ -129,7 +132,7 @@ describe('POST /api/orders — atomic stock guard', () => {
         expect(await Order.countDocuments()).toBe(0);
         const refreshedProduct = await Product.findById(product._id);
         expect(refreshedProduct.stock).toBe(10);
-        const cart = await Cart.findOne({ clerkId: 'test-user' });
+        const cart = await Cart.findOne({ user: user._id });
         expect(cart.items).toHaveLength(1);
 
         spy.mockRestore();
@@ -149,7 +152,6 @@ describe('PATCH /api/admin/orders/:orderId/status — Zod enum validation', () =
         });
         const order = await Order.create({
             user: '507f1f77bcf86cd799439011',
-            clerkId: 'test-user',
             orderItems: [{
                 product: product._id,
                 name: 'P',

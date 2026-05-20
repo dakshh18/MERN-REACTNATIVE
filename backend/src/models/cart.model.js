@@ -15,13 +15,12 @@ const cartItemSchema = new mongoose.Schema({
 });
 
 const cartSchema = new mongoose.Schema({
+    // The cart is keyed by the Mongo user _id — works for BOTH Clerk-OAuth
+    // users and local (email/OTP) users. (It used to be keyed by clerkId,
+    // which local users don't have.) Unique → one cart per user.
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
-    },
-    clerkId :{
-        type: String,
         required: true,
         unique: true,
     },

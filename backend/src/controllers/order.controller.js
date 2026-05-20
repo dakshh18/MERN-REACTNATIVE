@@ -11,7 +11,7 @@ const SHIPPING_FEE = 5;
 // Server-side computation of order items + totals from the user's cart.
 // Returns { orderItems, subtotal, totalPrice } or throws an Error with a .status.
 async function buildOrderFromCart(user) {
-    const cart = await Cart.findOne({ clerkId: user.clerkId }).populate('items.product');
+    const cart = await Cart.findOne({ user: user._id }).populate('items.product');
     if (!cart || cart.items.length === 0) {
         const err = new Error('Your cart is empty');
         err.status = 400;
@@ -63,7 +63,6 @@ export async function createPaymentIntent(req, res) {
             currency: 'usd',
             automatic_payment_methods: { enabled: true },
             metadata: {
-                clerkId: user.clerkId,
                 userId: user._id.toString(),
             },
         });
@@ -103,7 +102,7 @@ export async function createOrder(req, res) {
                     message: `Payment not completed (status: ${intent.status})`,
                 });
             }
-            if (intent.metadata?.clerkId !== user.clerkId) {
+            if (intent.metadata?.userId !== user._id.toString()) {
                 return res.status(403).json({ message: 'Payment does not belong to this user' });
             }
             const expected = Math.round(totalPrice * 100);
@@ -140,7 +139,6 @@ export async function createOrder(req, res) {
                 // Order.create's array form is required to pass { session }.
                 const [created] = await Order.create([{
                     user: user._id,
-                    clerkId: user.clerkId,
                     orderItems,
                     shippingAddress,
                     paymentResult,
@@ -183,7 +181,7 @@ export async function createOrder(req, res) {
 
 export async function getOrders(req, res) {
     try {
-        const orders = await Order.find({ clerkId: req.user.clerkId })
+        const orders = await Order.find({ user: req.user._id })
             .populate('orderItems.product')
             .sort({ createdAt: -1 });
 

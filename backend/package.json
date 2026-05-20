@@ -6,6 +6,7 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "seed:products": "node src/seeds/index.js",
+    "migrate:indexes": "node scripts/sync-indexes.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
