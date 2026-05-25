@@ -5,10 +5,9 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Modal,
 } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import React, { useEffect, useMemo, useState } from 'react'
 import SafeScreen from '@/components/SafeScreen'
 import CheckoutStepper from '@/components/CheckoutStepper'
@@ -224,12 +223,13 @@ const AddressScreen = () => {
         visible={showForm}
         animationType='slide'
         transparent
+        // statusBarTranslucent lets the Modal share the main window's
+        // adjustResize behavior on Android (otherwise the Modal is its
+        // own window and ignores keyboard layout).
+        statusBarTranslucent
         onRequestClose={() => setShowForm(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className='flex-1 justify-end bg-black/60'
-        >
+        <View className='flex-1 justify-end bg-black/60'>
           <View className='bg-background rounded-t-3xl px-6 pt-5 pb-8 max-h-[88%]'>
             <View className='flex-row items-center justify-between mb-4'>
               <Text className='text-text-primary text-xl font-bold'>
@@ -243,7 +243,16 @@ const AddressScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            {/* KeyboardAwareScrollView auto-scrolls the focused TextInput above
+                the keyboard. Works inside Modals on Android where stock
+                KeyboardAvoidingView is unreliable with edge-to-edge layouts. */}
+            <KeyboardAwareScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps='handled'
+              enableOnAndroid
+              extraScrollHeight={24}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
               <Field
                 label='Label'
                 value={form.label}
@@ -338,9 +347,9 @@ const AddressScreen = () => {
                   <Text className='text-background font-bold'>Save Address</Text>
                 )}
               </TouchableOpacity>
-            </ScrollView>
+            </KeyboardAwareScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </SafeScreen>
   )
